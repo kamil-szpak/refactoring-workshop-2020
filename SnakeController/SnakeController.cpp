@@ -70,10 +70,21 @@ void Controller::receive(std::unique_ptr<Event> e)
         auto const& timerEvent = *dynamic_cast<EventT<TimeoutInd> const&>(*e);
 
         Segment const& currentHead = m_segments.front();
-
         Segment newHead;
-        newHead.x = currentHead.x + ((m_currentDirection & 0b01) ? (m_currentDirection & 0b10) ? 1 : -1 : 0);
-        newHead.y = currentHead.y + (not (m_currentDirection & 0b01) ? (m_currentDirection & 0b10) ? 1 : -1 : 0);
+
+        auto tempx = 0;
+        auto tempy = 0;
+        if(m_currentDirection & 0b01) {
+            tempx = (m_currentDirection & 0b10) ? 1 : -1;
+            tempy = 0;
+        }
+        else {
+            tempx = 0;
+            tempy = (m_currentDirection & 0b10) ? 1 : -1;
+        }
+
+        newHead.x = currentHead.x + tempx;
+        newHead.y = currentHead.y + tempy;
         newHead.ttl = currentHead.ttl;
 
         bool lost = false;
@@ -125,6 +136,7 @@ void Controller::receive(std::unique_ptr<Event> e)
                     [](auto const& segment){ return not (segment.ttl > 0); }),
                 m_segments.end());
         }
+
     } catch (std::bad_cast&) {
         try {
             auto direction = dynamic_cast<EventT<DirectionInd> const&>(*e)->direction;
